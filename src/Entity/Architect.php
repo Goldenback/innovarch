@@ -10,18 +10,22 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ArchitectRepository::class)]
 class Architect extends User
 {
-	#[ORM\Id]
-	#[ORM\GeneratedValue]
-	#[ORM\Column]
 	/**
 	 * @var Collection<int, Client>
 	 */
 	#[ORM\OneToMany(targetEntity: Client::class, mappedBy: 'architect')]
 	private Collection $clients;
 
+    /**
+     * @var Collection<int, Project>
+     */
+    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'architect', orphanRemoval: true)]
+    private Collection $projects;
+
 	public function __construct()
 	{
 		$this->clients = new ArrayCollection();
+        $this->projects = new ArrayCollection();
 	}
 
 	/**
@@ -53,4 +57,34 @@ class Architect extends User
 
 		return $this;
 	}
+
+    /**
+     * @return Collection<int, Project>
+     */
+    public function getProjects(): Collection
+    {
+        return $this->projects;
+    }
+
+    public function addProject(Project $project): static
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects->add($project);
+            $project->setArchitect($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProject(Project $project): static
+    {
+        if ($this->projects->removeElement($project)) {
+            // set the owning side to null (unless already changed)
+            if ($project->getArchitect() === $this) {
+                $project->setArchitect(null);
+            }
+        }
+
+        return $this;
+    }
 }
